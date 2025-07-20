@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>es_shih 預約表單</title>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://amhlvudoovtomxwbujfw.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaGx2dWRvb3Z0b214d2J1amZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwMDE2NTAsImV4cCI6MjA2ODU3NzY1MH0.JslDkhohbMP8hPTasd2dcB69yrRqc50BAe120y0QglA'
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('booking-form')
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+
+        const name = form.name.value.trim()
+        const email = form.email.value.trim()
+        const contact = form.contact.value.trim()
+        const date = form.date.value
+        const time = form.time.value
+
+        if (!name || !email || !contact || !date || !time) {
+          alert('請填寫所有欄位')
+          return
+        }
+
+        // 檢查是否已被預約
+        const { data: existing, error: checkError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('date', date)
+          .eq('time', time)
+
+        if (existing.length > 0) {
+          alert('此時段已被預約，請選擇其他時間')
+          return
+        }
+
+        // 寫入預約資料
+        const { error } = await supabase
+          .from('bookings')
+          .insert([{ name, email, contact, date, time }])
+
+        if (error) {
+          alert('預約失敗，請稍後再試')
+        } else {
+          alert('預約成功！')
+          form.reset()
+        }
+      })
+    })
+  </script>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: auto; padding: 2em; }
+    label { display: block; margin-top: 1em; }
+    input, select, button { width: 100%; padding: 0.5em; margin-top: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>es_shih 預約表單</h1>
+  <form id="booking-form">
+    <label>姓名
+      <input type="text" name="name" required>
+    </label>
+    <label>Email
+      <input type="email" name="email" required>
+    </label>
+    <label>LINE 或 IG 帳號
+      <input type="text" name="contact" required>
+    </label>
+    <label>日期
+      <input type="date" name="date" required min="<?= new Date().toISOString().split('T')[0] ?>">
+    </label>
+    <label>時段
+      <select name="time" required>
+        <option value="">請選擇</option>
+        <option>13:00</option>
+        <option>14:00</option>
+        <option>15:00</option>
+        <option>16:00</option>
+        <option>17:00</option>
+        <option>18:00</option>
+        <option>19:00</option>
+        <option>20:00</option>
+      </select>
+    </label>
+    <button type="submit">送出預約</button>
+  </form>
+</body>
+</html>
